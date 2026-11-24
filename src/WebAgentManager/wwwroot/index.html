@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Estação Protheus · WebAgents</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Estação Protheus, início"><span class="brand-mark">ep</span><span>Estação<strong>Protheus</strong></span></a>
+    <p class="sidebar-caption">Seus clientes. Cada agente no seu lugar.</p>
+    <nav aria-label="Navegação principal">
+      <button class="nav-item selected" data-view="environments"><span aria-hidden="true">▦</span>Ambientes <span id="environment-count" class="nav-count">0</span></button>
+      <button class="nav-item" data-view="agents"><span aria-hidden="true">◇</span>WebAgents</button>
+      <button class="nav-item" data-view="sessions"><span aria-hidden="true">◉</span>Sessões <span id="session-count" class="nav-count">0</span></button>
+      <button class="nav-item" data-view="history"><span aria-hidden="true">↶</span>Histórico</button>
+      <button class="nav-item" data-view="settings"><span aria-hidden="true">⚙</span>Configurações</button>
+    </nav>
+    <div class="local-context"><span class="status-dot" id="connection-dot"></span><div><strong id="connection-label">Conectando…</strong><small id="current-user">Somente nesta máquina</small></div></div>
+    <div class="sidebar-footer">Gerenciador independente<br>Sem vínculo com a TOTVS</div>
+  </aside>
+
+  <main>
+    <div class="topline"><span>Área de trabalho local</span><span id="local-address">127.0.0.1:17643</span></div>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+
+    <section id="view-environments" class="view">
+      <header class="page-heading"><div><h1>Seus ambientes</h1><p>Abra cada cliente com o WebAgent certo. Sem interromper os outros.</p></div><button class="primary" id="new-environment">＋ Novo ambiente</button></header>
+      <div class="toolbar"><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Buscar cliente, ambiente ou endereço" aria-label="Buscar ambientes"></label><label class="favorite-filter"><input id="only-favorites" type="checkbox"> Só favoritos</label><button id="refresh" class="quiet">Atualizar</button></div>
+      <div class="list-heading"><span>Cliente / ambiente</span><span>WebAgent / endereço</span><span>Ações</span></div>
+      <div id="environment-list"></div>
+      <div class="footnote"><span aria-hidden="true">ⓘ</span><p>Abra os ambientes por este painel. O modo <code>launch</code> usa uma porta local própria para cada execução. A conexão efetiva deve ser conferida no WebApp.</p></div>
+    </section>
+
+    <section id="view-agents" class="view" hidden>
+      <header class="page-heading"><div><h1>Biblioteca de WebAgents</h1><p>Prepare uma versão uma vez. Vincule aos ambientes que precisam dela.</p></div><button class="primary" id="new-agent">＋ Preparar WebAgent</button></header>
+      <div class="explanation"><strong>Instalação assistida, abertura independente.</strong><p>Você confirma a instalação no Windows. O gerenciador preserva uma cópia da pasta padrão antes da instalação e organiza cópias separadas para cada ambiente. Nunca encerra seus agentes automaticamente.</p></div>
+      <h2>Preparações</h2><div id="preparation-list"></div>
+      <h2 class="section-gap">Agentes disponíveis</h2><div id="agent-list"></div>
+    </section>
+
+    <section id="view-sessions" class="view" hidden>
+      <header class="page-heading"><div><h1>Sessões desta execução</h1><p>Processos iniciados pelo gerenciador desde que ele foi aberto.</p></div></header>
+      <div id="session-list"></div>
+      <div class="footnote"><p>Processo aberto não significa conexão validada no Protheus. Feche o ambiente pelo navegador; segundo a TOTVS, o agente em modo launch pode levar de 2 a 3 minutos para se encerrar. Agentes abertos fora do painel não aparecem nesta lista.</p></div>
+    </section>
+
+    <section id="view-history" class="view" hidden>
+      <header class="page-heading"><div><h1>Histórico de operações</h1><p>Últimas 200 operações. Nenhuma senha do Protheus é solicitada ou armazenada.</p></div></header>
+      <div id="history-list"></div>
+    </section>
+
+    <section id="view-settings" class="view" hidden>
+      <header class="page-heading"><div><h1>Configurações</h1><p>Preferências e dados exclusivos do seu usuário do Windows.</p></div></header>
+      <div class="settings-layout">
+        <section class="settings-block"><h2>Navegador padrão</h2><form id="settings-form"><label>Caminho do navegador<input name="browser" list="browser-paths" placeholder="Padrão do Windows"></label><p class="hint">Deixe vazio para usar o padrão do Windows (WebAgent 1.0.24 ou superior). Cada ambiente pode ter um navegador diferente.</p><button class="primary" type="submit">Salvar preferência</button></form></section>
+        <section class="settings-block"><h2>Backup dos cadastros</h2><p>Exporte ambientes e preferências em JSON. A importação mescla os cadastros e exige que os agentes vinculados já existam nesta instalação.</p><div class="button-row"><button id="export-catalog">Exportar cadastros</button><button id="import-catalog">Importar cadastros</button></div><input id="catalog-file" type="file" accept=".json,application/json" hidden><p class="hint">O JSON não inclui executáveis, DLLs ou histórico. Para backup completo, feche o gerenciador e copie toda a pasta de dados.</p></section>
+        <section class="settings-block wide"><h2>Diagnóstico local</h2><dl id="diagnostics"></dl><p class="hint">Nenhuma alteração no AppServer.ini é feita. Certificados e permissões de acesso à rede local devem ser confirmados por você no Windows/navegador. Perfis, cookies e credenciais do navegador não são isolados pelo gerenciador.</p></section>
+        <section class="settings-block wide"><h2>Iniciar junto com o Windows</h2><p>Após publicar, execute <code>scripts/Instalar-InicioUsuario.ps1</code> para criar um atalho somente no seu login. A inicialização automática não é ativada sem sua ação.</p><p class="hint">Para remover, execute o mesmo script com <code>-Remover</code>. Consulte o README do projeto para publicação e operação.</p></section>
+      </div>
+    </section>
+    <footer class="main-footer">Estação Protheus <span>Versão inicial · uso local por usuário</span></footer>
+  </main>
+
+  <datalist id="browser-paths"></datalist>
+
+  <dialog id="environment-dialog">
+    <form id="environment-form">
+      <header class="dialog-heading"><div><h2 id="environment-title">Novo ambiente</h2><p>Um vínculo explícito entre cliente, WebApp e agente.</p></div><button type="button" class="icon-button" data-close="environment-dialog" aria-label="Fechar">×</button></header>
+      <input type="hidden" name="id">
+      <div class="form-grid"><label>Cliente<input name="client" required maxlength="120" placeholder="Nome do cliente"></label><label>Nome do ambiente<input name="name" required maxlength="120" placeholder="Ex.: Matriz — homologação"></label></div>
+      <div class="form-grid"><label>Tipo<select name="kind"><option>Homologação</option><option>Produção</option><option>Desenvolvimento</option><option>Outro</option></select></label><label>WebAgent<select name="agentId" id="environment-agent" required></select></label></div>
+      <label>URL do WebApp (IP/domínio, porta e caminho)<input name="url" type="url" required maxlength="4096" placeholder="https://servidor.cliente:8080/webapp/"></label>
+      <p class="hint">Use a URL completa, incluindo parâmetros se necessário, como <code>?E=ambiente&amp;P=SIGAMDI</code>. Não informe usuário ou senha na URL. A porta aqui é a do WebApp, não a do agente local.</p>
+      <label>Navegador deste ambiente<input name="browser" list="browser-paths" placeholder="Usar a preferência geral"></label>
+      <label>Observações<textarea name="notes" rows="3" maxlength="4000" placeholder="VPN, integrações ou cuidados deste ambiente"></textarea></label>
+      <label class="check-label"><input name="favorite" type="checkbox"> Marcar como favorito</label>
+      <p class="form-error" id="environment-error" role="alert"></p>
+      <footer class="dialog-actions"><button type="button" data-close="environment-dialog">Cancelar</button><button class="primary" type="submit">Salvar ambiente</button></footer>
+    </form>
+  </dialog>
+
+  <dialog id="agent-dialog">
+    <header class="dialog-heading"><div><h2>Preparar WebAgent</h2><p>Importe o instalador oficial ou uma pasta já instalada.</p></div><button class="icon-button" data-close="agent-dialog" aria-label="Fechar">×</button></header>
+    <div class="tab-buttons" role="group" aria-label="Origem do agente"><button class="selected" data-agent-tab="installer">Instalador EXE / MSI</button><button data-agent-tab="folder">Pasta instalada</button></div>
+    <form id="installer-form"><label>Nome para identificar esta versão<input name="name" required maxlength="120" placeholder="Ex.: Cliente A — 1.1.1 x64"></label><label>Instalador oficial<input name="file" type="file" accept=".exe,.msi" required></label><p class="hint">Máximo 512 MB. A assinatura digital deve ser válida e pertencer à TOTVS. O gerenciador não extrai pacotes nem instala silenciosamente.</p><ol class="steps"><li>Selecione e verifique o instalador.</li><li>Na biblioteca, confirme a abertura do instalador. Todos os WebAgents precisam estar fechados.</li><li>Conclua no Windows e feche o agente pela bandeja.</li><li>Clique em “Capturar instalação” para preservar a versão.</li></ol><p class="form-error" id="installer-error" role="alert"></p><footer class="dialog-actions"><button type="button" data-close="agent-dialog">Cancelar</button><button type="submit" class="primary">Verificar instalador</button></footer></form>
+    <form id="folder-form" hidden><label>Nome do WebAgent<input name="name" required maxlength="120" placeholder="Ex.: Cliente B — agente com DLLs"></label><label>Pasta que contém web-agent.exe<input name="path" required placeholder="C:\Users\seu-usuario\AppData\Local\Programs\web-agent"></label><p class="hint">Informe uma pasta local já instalada. Feche os agentes antes de copiar. A origem será preservada; links simbólicos e junctions não são aceitos.</p><p class="form-error" id="folder-error" role="alert"></p><footer class="dialog-actions"><button type="button" data-close="agent-dialog">Cancelar</button><button type="submit" class="primary">Importar pasta</button></footer></form>
+  </dialog>
+
+  <dialog id="confirm-dialog"><form method="dialog"><h2 id="confirm-title">Confirmar operação</h2><p id="confirm-message"></p><footer class="dialog-actions"><button value="cancel">Cancelar</button><button id="confirm-accept" class="primary" value="accept">Confirmar</button></footer></form></dialog>
+</body>
+</html>

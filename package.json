@@ -1,0 +1,11 @@
+{
+  "name": "estacao-protheus-tests",
+  "private": true,
+  "scripts": {
+    "test:ui": "playwright test",
+    "check:js": "node --check src/WebAgentManager/wwwroot/app.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1"
+  }
+}

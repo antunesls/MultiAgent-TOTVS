@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+artifacts/
+node_modules/
+test-results/
+playwright-report/
+*.user
+*.db
+*.db-shm
+*.db-wal
