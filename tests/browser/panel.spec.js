@@ -4,6 +4,8 @@ test('painel local, navegação, formulários e assinatura inválida', async ({ 
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
+  await expect(page).toHaveTitle('MultAgent TOTVS · WebAgents');
+  await expect(page.getByRole('link', { name: 'MultAgent TOTVS, início' })).toBeVisible();
   await expect(page.getByText('Conectado localmente')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Seus ambientes' })).toBeVisible();
   await expect(page.getByText('Seu próximo cliente começa aqui')).toBeVisible();
@@ -76,6 +78,14 @@ test('formulário de ambiente e confirmação de produção (API simulada, sem e
   await page.getByRole('button', { name: 'Abrir', exact: true }).click();
   await page.locator('#confirm-dialog').getByRole('button', { name: 'Abrir produção' }).click();
   await expect.poll(() => launched).toBe(true);
+  await page.route('**/api/agents/agent-ui-test/refresh', route => {
+    agent.version = '1.1.2';
+    return route.fulfill({ json: agent });
+  });
+  await page.getByRole('button', { name: 'WebAgents', exact: true }).click();
+  await page.getByRole('button', { name: 'Atualizar identificação' }).click();
+  await expect(page.locator('.agent-card .badge').first()).toHaveText('1.1.2');
+  await expect(page.getByRole('status')).toContainText('Arquivos e vínculos preservados');
 });
 
 test('atualização automática preserva preferência não salva após perder foco', async ({ page }) => {

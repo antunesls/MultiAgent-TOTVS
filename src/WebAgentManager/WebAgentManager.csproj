@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <Version>0.1.2</Version>
+    <Product>MultAgent TOTVS</Product>
+    <Title>MultAgent TOTVS</Title>
+    <Description>Gerenciador local de WebAgents TOTVS Protheus por usuário.</Description>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>WinExe</OutputType>

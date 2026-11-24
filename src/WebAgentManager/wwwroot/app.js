@@ -79,7 +79,7 @@ function renderEnvironments() {
 }
 
 function renderAgents() {
-  $('#agent-list').innerHTML = state.agents.length ? state.agents.map(agent => `<article class="agent-card"><div><h3>${e(agent.name)}</h3><p><span class="badge">${e(agent.version)}</span> <span class="badge">${e(agent.architecture)}</span> · ${state.environments.filter(item => item.agentId === agent.id).length} vínculos</p><p class="mono">${e(agent.directory)}</p><p class="mono">SHA-256 ${e(agent.sha256)}</p></div><button data-action="use-agent" data-id="${e(agent.id)}">Criar ambiente</button></article>`).join('') : empty('Nenhum WebAgent preparado', 'Adicione um instalador oficial EXE/MSI ou importe uma pasta já instalada.');
+  $('#agent-list').innerHTML = state.agents.length ? state.agents.map(agent => `<article class="agent-card"><div><h3>${e(agent.name)}</h3><p><span class="badge">${e(agent.version)}</span> <span class="badge">${e(agent.architecture)}</span> · ${state.environments.filter(item => item.agentId === agent.id).length} vínculos</p><p class="mono">${e(agent.directory)}</p><p class="mono">SHA-256 ${e(agent.sha256)}</p></div><div class="button-row"><button data-action="refresh-agent" data-id="${e(agent.id)}">Atualizar identificação</button><button data-action="use-agent" data-id="${e(agent.id)}">Criar ambiente</button></div></article>`).join('') : empty('Nenhum WebAgent preparado', 'Adicione um instalador oficial EXE/MSI ou importe uma pasta já instalada.');
   const pending = state.preparations.filter(item => !['Concluído', 'Cancelado'].includes(item.stage));
   $('#preparation-list').innerHTML = pending.length ? pending.map(item => `<article class="preparation-card"><div><h3>${e(item.name)}</h3><p><span class="badge">${e(item.stage)}</span></p><p>Assinatura válida: ${e(item.inspection.signer)}</p><p class="mono">SHA-256 ${e(item.inspection.sha256)}</p>${item.backup ? `<p>Backup preservado em:</p><p class="mono">${e(item.backup)}</p>` : ''}${item.stage !== 'Verificado' ? '<p>Conclua o instalador, feche o WebAgent pela bandeja e capture a instalação padrão. Se escolheu outro destino, cancele e use “Pasta instalada”.</p>' : '<p>A instalação pode substituir a pasta padrão. As cópias gerenciadas são preservadas.</p>'}</div><div class="button-row">${item.stage === 'Verificado' ? `<button class="primary" data-action="install" data-id="${e(item.id)}">Abrir instalador</button>` : `<button class="primary" data-action="capture" data-id="${e(item.id)}">Capturar instalação</button>`}<button data-action="cancel-preparation" data-id="${e(item.id)}">Cancelar preparação</button></div></article>`).join('') : '<p class="hint">Nenhuma preparação em andamento.</p>';
 }
@@ -184,6 +184,11 @@ document.addEventListener('click', event => {
   if (action === 'prepare') { showView('agents'); openAgentDialog(); }
   if (action === 'edit') editEnvironment(state.environments.find(item => item.id === id));
   if (action === 'use-agent') editEnvironment(null, id);
+  if (action === 'refresh-agent') work(button, async () => {
+    const agent = await (await api('/agents/' + id + '/refresh', { method: 'POST', body: {} })).json();
+    notice(`Identificação atualizada: ${agent.name} (${agent.version} ${agent.architecture}). Arquivos e vínculos preservados.`);
+    await refresh();
+  });
   if (action === 'favorite') work(button, async () => {
     const entry = state.environments.find(item => item.id === id);
     await api('/environments', { method: 'POST', body: { ...entry, favorite: !entry.favorite } });

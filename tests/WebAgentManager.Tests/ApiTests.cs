@@ -36,6 +36,17 @@ public sealed class ApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task IdentificaProjetoComoMultAgentTotvs()
+    {
+        var bootstrap = await client.GetFromJsonAsync<JsonElement>("/api/bootstrap");
+        Assert.Equal("MultAgentTOTVS", bootstrap.GetProperty("product").GetString());
+        Assert.Equal("MultAgent TOTVS", bootstrap.GetProperty("name").GetString());
+        var html = await client.GetStringAsync("/");
+        Assert.Contains("<title>MultAgent TOTVS · WebAgents</title>", html);
+        Assert.DoesNotContain("Estação Protheus", html);
+    }
+
+    [Fact]
     public async Task ApiRecusaTokenAusente() => Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/state")).StatusCode);
 
     [Fact]
@@ -81,6 +92,13 @@ public sealed class ApiTests : IAsyncLifetime
     {
         await Authorize();
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/environments/ausente/launch", new { })).StatusCode);
+    }
+
+    [Fact]
+    public async Task RecusaAtualizarAgenteInexistente()
+    {
+        await Authorize();
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/agents/ausente/refresh", new { })).StatusCode);
     }
 
     [Fact]

@@ -46,7 +46,7 @@ public static class Rules
     {
         var match = Regex.Match(version, @"\d+\.\d+\.\d+(?:\.\d+)?", RegexOptions.CultureInvariant);
         if (!match.Success || !Version.TryParse(match.Value, out var parsed))
-            throw new ArgumentException("Não foi possível identificar a versão do WebAgent. Use um instalador oficial com metadados de versão.");
+            throw new ArgumentException("Não foi possível identificar a versão do WebAgent. Importe o pacote oficial completo, incluindo package.json, e atualize a identificação do agente.");
         if (parsed < new Version(1, 0, 16)) throw new ArgumentException("Este gerenciador exige WebAgent 1.0.16 ou superior para abertura isolada com launch.");
         if (browser == "" && parsed < new Version(1, 0, 24)) throw new ArgumentException("WebAgent anterior à versão 1.0.24: selecione explicitamente um navegador no ambiente ou nas configurações.");
     }

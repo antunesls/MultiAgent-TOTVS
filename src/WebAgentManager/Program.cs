@@ -65,7 +65,7 @@ app.Use(async (context, next) =>
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
-app.MapGet("/api/bootstrap", () => new { token, version = "0.1.0", product = "EstacaoProtheus", localUrl = origin });
+app.MapGet("/api/bootstrap", () => new { token, version = "0.1.2", product = "MultAgentTOTVS", name = "MultAgent TOTVS", localUrl = origin });
 app.MapGet("/api/state", (Store store, AgentService agents, IPlatform platform) => new
 {
     environments = store.Environments(), agents = store.Agents(), sessions = agents.Sessions(), history = store.History(),
@@ -79,6 +79,7 @@ app.MapPut("/api/settings", (ManagerSettings settings, Store store) => { store.S
 app.MapGet("/api/export", (Store store) => Results.File(JsonSerializer.SerializeToUtf8Bytes(store.Export(), new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }), "application/json", $"ambientes-{DateTime.Now:yyyyMMdd-HHmmss}.json"));
 app.MapPost("/api/import", (Catalog catalog, Store store) => { store.Import(catalog); return Results.Ok(new { message = "Cadastros mesclados. Arquivos de agentes não foram alterados." }); });
 app.MapPost("/api/agents/folder", async (FolderRequest request, AgentService agents) => await agents.ImportFolder(request.Name, request.Path));
+app.MapPost("/api/agents/{id}/refresh", async (string id, AgentService agents) => await agents.RefreshAgent(id));
 app.MapPost("/api/preparations/upload", async (HttpRequest request, Store store, AgentService agents) =>
 {
     var name = request.Query["name"].ToString();

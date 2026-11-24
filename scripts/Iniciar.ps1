@@ -7,7 +7,8 @@ $url = "http://127.0.0.1:$port"
 $existing = $false
 try {
     $response = Invoke-RestMethod "$url/api/bootstrap" -TimeoutSec 2
-    $existing = $response.product -eq 'EstacaoProtheus'
+    # Aceita a identidade anterior para reutilizar instalacoes ainda abertas.
+    $existing = $response.product -in @('MultAgentTOTVS', 'EstacaoProtheus')
 } catch { $existing = $false }
 if ($existing) {
     Start-Process $url

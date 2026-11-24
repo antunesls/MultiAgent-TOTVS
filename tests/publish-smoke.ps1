@@ -15,13 +15,14 @@ try {
         try { $bootstrap = Invoke-RestMethod 'http://127.0.0.1:17645/api/bootstrap' -TimeoutSec 1; break }
         catch { Start-Sleep -Milliseconds 150 }
     }
-    if (-not $bootstrap -or $bootstrap.product -ne 'EstacaoProtheus') { throw 'Servidor publicado nao respondeu corretamente.' }
+    if (-not $bootstrap -or $bootstrap.product -ne 'MultAgentTOTVS' -or $bootstrap.name -ne 'MultAgent TOTVS') { throw 'Servidor publicado nao respondeu corretamente.' }
     $headers = @{ 'X-WAM-Token' = $bootstrap.token }
     $state = Invoke-RestMethod 'http://127.0.0.1:17645/api/state' -Headers $headers
     if ($state.environments.Count -ne 0) { throw 'Dados de teste nao estao isolados.' }
     if ($state.diagnostics.dataDirectory -ne $env:WAM_DATA_DIR) { throw 'Pasta de dados inesperada.' }
     $page = Invoke-WebRequest 'http://127.0.0.1:17645/' -UseBasicParsing
     if ($page.Content -notmatch 'Seus ambientes') { throw 'Arquivos estaticos nao foram publicados.' }
+    if ($page.Content -notmatch '<title>MultAgent TOTVS') { throw 'Nome do projeto nao foi atualizado no painel.' }
     $script = Invoke-WebRequest 'http://127.0.0.1:17645/app.js' -UseBasicParsing
     if ($script.StatusCode -ne 200) { throw 'JavaScript nao publicado.' }
     Write-Output 'PASS: executavel publicado iniciou fora da pasta do projeto.'

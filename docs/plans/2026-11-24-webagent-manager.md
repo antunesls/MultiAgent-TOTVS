@@ -1,4 +1,4 @@
-# Gerenciador de WebAgents — plano de implementação
+# MultAgent TOTVS — plano de implementação
 
 > Execução: seguir a skill executing-plans, com testes antes da implementação e validação por etapa.
 
@@ -27,7 +27,7 @@ Workspace inicialmente vazio, sem Git, padrões prévios ou testes. Não há wor
 ## Decisões e riscos
 
 - Acesso apenas em 127.0.0.1; validação de Host/Origin, token de sessão em todas as APIs e sem CORS. Sem API de shell arbitrário.
-- Versão/arquitetura identificadas por metadados PE; assinatura Authenticode deve ser válida e emitida para TOTVS antes da execução/importação.
+- Versão identificada por package.json do agente após validação da assinatura (fallback para metadados reconhecíveis); arquitetura pelo cabeçalho PE. Assinatura Authenticode deve ser válida e emitida para TOTVS antes da execução/importação.
 - Cada ambiente recebe cópia própria dos arquivos. Origens e destinos com reparse points são rejeitados. Exclusão de cadastro não apaga arquivos automaticamente.
 - Preparação: importar EXE/MSI → verificar assinatura/hash → confirmar instalação → fazer backup da instalação padrão → abrir instalador interativo → usuário fecha agente recém-iniciado → capturar instalação → vincular ambiente.
 - Preparação fica bloqueada se qualquer web-agent estiver em execução ou outra preparação estiver pendente. Não encerrar processos globalmente.
@@ -116,3 +116,11 @@ O TDN documenta launch com portas aleatórias, cópia da instalação para coexi
 - Preferência de navegador não salva é preservada durante polling.
 - Handles de processos encerrados são liberados, preservando estado final; encerrar o gerenciador não encerra agentes.
 - Nenhum agente existente do usuário foi encerrado, nenhum instalador real foi executado e início no login não foi ativado.
+
+### Correção 0.1.1 — versão genérica nos recursos PE
+
+- Evidência real: `ProductVersion` e `FileVersion` retornam `1, 0, 0, 1`, enquanto `package.json` informa `1.1.1`; usuário confirmou saída manual `v1.1.1 - x64`.
+- `--version` abre console própria, aguarda tecla e não fornece stdout redirecionável neste pacote. Não usar consultas automáticas que deixem janelas/processos pendentes.
+- Resolver versão no manifesto local limitado a 64 KB, com nome/versão validados e sem links. Ler somente após assinatura do executável ser válida.
+- Disponibilizar atualização explícita da identificação com hash preservado e sem mudar arquivos, IDs ou vínculos.
+- Testes de regressão: precedência do manifesto, fallback reconhecível, rejeição de manifesto incorreto/grande, manutenção de vínculos e bloqueio de executável alterado.

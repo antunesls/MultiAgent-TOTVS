@@ -73,6 +73,11 @@ public sealed class WindowsPlatform : IPlatform
         var status = document.RootElement.GetProperty("status").GetString() ?? "Unknown";
         var signer = document.RootElement.GetProperty("signer").GetString() ?? "";
         var trusted = status == "Valid" && Rules.TotvsSigner(signer);
+        // O recurso PE de alguns WebAgents informa apenas "1, 0, 0, 1".
+        // O pacote instalado contém a versão do produto, sem executar o agente
+        // (--version pode abrir console própria e aguardar uma tecla).
+        if (trusted && Path.GetFileName(path).Equals("web-agent.exe", StringComparison.OrdinalIgnoreCase))
+            version = AgentVersion.Resolve(path, version);
         return new(version.Trim(), architecture, sha, trusted, signer, status);
     }
 

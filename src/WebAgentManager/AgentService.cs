@@ -127,6 +127,26 @@ public sealed class AgentService(Store store, IPlatform platform) : IDisposable
         if (!inspection.Trusted) throw new ArgumentException($"Arquivo recusado: assinatura TOTVS válida exigida. Resultado: {inspection.Status}. Obtenha o instalador oficial e confira os certificados do Windows.");
     }
 
+    public async Task<AgentEntry> RefreshAgent(string id)
+    {
+        await operation.WaitAsync();
+        try
+        {
+            var agent = store.Agents().FirstOrDefault(item => item.Id == id) ?? throw new ArgumentException("WebAgent não encontrado.");
+            var executable = Path.Combine(agent.Directory, "web-agent.exe");
+            SafeFiles.NoLinks(executable);
+            var inspection = await platform.Inspect(executable);
+            RequireTrusted(inspection);
+            if (inspection.Sha256 != agent.Sha256) throw new ArgumentException("O executável mudou desde a captura. Prepare uma nova versão; atualizar identificação não substitui arquivos nem aceita alterações do executável.");
+            if (inspection.Architecture is not ("x86" or "x64")) throw new ArgumentException("Arquitetura não suportada.");
+            var updated = agent with { Version = inspection.Version, Architecture = inspection.Architecture };
+            store.AddAgent(updated);
+            store.Log("Identificação atualizada", $"{agent.Name}: {agent.Version} → {updated.Version} {updated.Architecture}. Arquivos e vínculos preservados.");
+            return updated;
+        }
+        finally { operation.Release(); }
+    }
+
     private (PreparationEntry Entry, IRunningProcess? Process) Preparation(string id)
     {
         lock (gate) return preparations.TryGetValue(id, out var item) ? item : throw new ArgumentException("Preparação não encontrada. Após reiniciar, importe a pasta instalada ou selecione o instalador novamente.");

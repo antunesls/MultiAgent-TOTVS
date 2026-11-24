@@ -1,5 +1,5 @@
 {
-  "name": "estacao-protheus-tests",
+  "name": "multagent-totvs",
   "private": true,
   "scripts": {
     "test:ui": "playwright test",

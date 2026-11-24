@@ -86,6 +86,40 @@ public sealed class AgentTests : IDisposable
     }
 
     [Fact]
+    public async Task AtualizaIdentificacaoSemReinstalarOuMudarIdentificador()
+    {
+        var (store, service, source) = Setup();
+        using (store)
+        {
+            var agent = await service.ImportFolder("CPQ Produção", source);
+            store.AddAgent(agent with { Version = "1, 0, 0, 1" });
+            var environment = store.SaveEnvironment(new() { Client = "CPQ", Name = "Produção", Url = "https://cliente/", AgentId = agent.Id });
+            platform.AnyAgent = true; // Leitura de metadados não deve exigir encerrar sessões.
+            var updated = await service.RefreshAgent(agent.Id);
+            Assert.Equal("1.1.1", updated.Version);
+            Assert.Equal(agent.Id, updated.Id);
+            Assert.Equal(agent.Directory, updated.Directory);
+            Assert.Equal(agent.Sha256, updated.Sha256);
+            Assert.Equal(updated, Assert.Single(store.Agents()));
+            Assert.Equal(environment, Assert.Single(store.Environments()));
+            Assert.Empty(platform.Starts);
+        }
+    }
+
+    [Fact]
+    public async Task AtualizacaoDeIdentificacaoNaoAceitaExecutavelAlterado()
+    {
+        var (store, service, source) = Setup();
+        using (store)
+        {
+            var agent = await service.ImportFolder("Agente", source);
+            platform.Hash = "alterado";
+            await Assert.ThrowsAsync<ArgumentException>(() => service.RefreshAgent(agent.Id));
+            Assert.Equal(agent, Assert.Single(store.Agents()));
+        }
+    }
+
+    [Fact]
     public async Task LiberaRecursosDeSessaoEncerradaSemPerderEstadoFinal()
     {
         var (store, service, source) = Setup();
