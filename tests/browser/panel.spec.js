@@ -21,8 +21,15 @@ test('painel local, navegação, formulários e assinatura inválida', async ({ 
   await page.getByRole('button', { name: 'Instalador EXE / MSI' }).click();
   await page.locator('#installer-form [name=name]').fill('Instalador inválido de teste');
   await page.locator('#installer-form [name=file]').setInputFiles({ name: 'unsigned.exe', mimeType: 'application/octet-stream', buffer: Buffer.from('Arquivo de teste; não é executável.') });
+  const uploadResponse = page.waitForResponse(response => response.url().includes('/api/preparations/upload') && response.request().method() === 'POST', { timeout: 65000 });
   await page.getByRole('button', { name: 'Verificar instalador' }).click();
-  await expect(page.locator('#installer-error')).toContainText('assinatura TOTVS válida exigida', { timeout: 65000 });
+  expect((await uploadResponse).status()).toBe(400);
+  // O provedor Authenticode pode recusar o formato antes de devolver NotSigned.
+  await expect(page.locator('#installer-error')).toContainText(/assinatura TOTVS válida exigida|O Windows não conseguiu verificar a assinatura digital do arquivo\./, { timeout: 65000 });
+  const bootstrap = await (await page.request.get('/api/bootstrap')).json();
+  const rejectedState = await (await page.request.get('/api/state', { headers: { 'X-WAM-Token': bootstrap.token } })).json();
+  expect(rejectedState.preparations).toEqual([]);
+  expect(rejectedState.agents).toEqual([]);
   await page.locator('#agent-dialog [aria-label=Fechar]').click();
 
   await page.getByRole('button', { name: 'Configurações', exact: true }).click();

@@ -2,7 +2,7 @@
 
 Gerenciador web **local e por usuário Windows** para organizar clientes, ambientes e instalações do TOTVS WebAgent. Não exige IIS. Projeto independente, sem vínculo com a TOTVS.
 
-**Versão atual: 0.1.2** · [Repositório no GitHub](https://github.com/antunesls/MultiAgent-TOTVS)
+**Versão atual: 0.1.3** · [Repositório no GitHub](https://github.com/antunesls/MultiAgent-TOTVS)
 
 ## O que o projeto oferece
 
