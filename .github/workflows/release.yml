@@ -1,0 +1,97 @@
+name: Release Windows
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Instalar dependências de testes
+        run: npm ci
+      - name: Verificar JavaScript e contratos de release
+        run: |
+          npm run check:js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run test:release
+      - name: Testar backend
+        run: dotnet test tests/WebAgentManager.Tests -c Release
+      - name: Instalar navegador de testes
+        run: npx playwright install msedge
+      - name: Testar interface
+        run: npm run test:ui
+      - name: Instalar Inno Setup 6
+        run: choco install innosetup --version=6.7.1 --yes --no-progress --limit-output
+      - name: Gerar instalador, ZIP e checksums
+        env:
+          RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: ./scripts/Gerar-Release.ps1 -Tag $env:RELEASE_TAG
+      - name: Validar pacote portatil
+        run: |
+          $release = Get-ChildItem artifacts/releases -Directory | Select-Object -First 1
+          ./tests/release/archive-smoke.ps1 -ReleaseDirectory $release.FullName
+      - name: Validar instalacao, reinstalacao e desinstalacao
+        run: |
+          $installer = Get-ChildItem artifacts/releases/*/*-setup.exe | Select-Object -First 1
+          ./tests/release/installer-smoke.ps1 -InstallerPath $installer.FullName
+      - name: Guardar pacotes validados
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: artifacts/releases/*/*
+          if-no-files-found: error
+          retention-days: 14
+      - name: Guardar evidencias em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostico-release
+          path: |
+            test-results/
+            ${{ runner.temp }}/multagent-installer-*/**/*.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  publish:
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-windows
+          path: release
+      - name: Publicar GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          mapfile -d '' assets < <(find release -type f -print0)
+          if [ "${#assets[@]}" -ne 3 ]; then
+            echo "Esperados instalador, ZIP e SHA256SUMS.txt."
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" "${assets[@]}" --verify-tag --generate-notes --title "MultAgent TOTVS $RELEASE_TAG"

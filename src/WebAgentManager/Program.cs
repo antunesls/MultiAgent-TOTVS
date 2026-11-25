@@ -65,7 +65,7 @@ app.Use(async (context, next) =>
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
-app.MapGet("/api/bootstrap", () => new { token, version = "0.1.2", product = "MultAgentTOTVS", name = "MultAgent TOTVS", localUrl = origin });
+app.MapGet("/api/bootstrap", () => new { token, version = typeof(Program).Assembly.GetName().Version!.ToString(3), product = "MultAgentTOTVS", name = "MultAgent TOTVS", localUrl = origin });
 app.MapGet("/api/state", (Store store, AgentService agents, IPlatform platform) => new
 {
     environments = store.Environments(), agents = store.Agents(), sessions = agents.Sessions(), history = store.History(),

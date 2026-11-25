@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "test:ui": "playwright test",
+    "test:release": "node --test tests/release/*.test.js",
     "check:js": "node --check src/WebAgentManager/wwwroot/app.js"
   },
   "devDependencies": {

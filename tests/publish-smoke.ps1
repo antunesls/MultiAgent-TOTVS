@@ -1,6 +1,8 @@
+param([string]$ApplicationDirectory)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$executable = Join-Path $root 'artifacts\app\WebAgentManager.exe'
+if (-not $ApplicationDirectory) { $ApplicationDirectory = Join-Path $root 'artifacts\app' }
+$executable = Join-Path $ApplicationDirectory 'WebAgentManager.exe'
 if (-not (Test-Path -LiteralPath $executable)) { throw 'Publique o aplicativo antes deste teste.' }
 $originalPort = $env:WAM_PORT
 $originalData = $env:WAM_DATA_DIR
@@ -16,6 +18,8 @@ try {
         catch { Start-Sleep -Milliseconds 150 }
     }
     if (-not $bootstrap -or $bootstrap.product -ne 'MultAgentTOTVS' -or $bootstrap.name -ne 'MultAgent TOTVS') { throw 'Servidor publicado nao respondeu corretamente.' }
+    [xml]$project = Get-Content -LiteralPath (Join-Path $root 'src\WebAgentManager\WebAgentManager.csproj') -Raw
+    if ($bootstrap.version -ne [string]$project.Project.PropertyGroup.Version) { throw 'Versao da API diverge da versao do projeto.' }
     $headers = @{ 'X-WAM-Token' = $bootstrap.token }
     $state = Invoke-RestMethod 'http://127.0.0.1:17645/api/state' -Headers $headers
     if ($state.environments.Count -ne 0) { throw 'Dados de teste nao estao isolados.' }

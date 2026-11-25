@@ -47,6 +47,13 @@ public sealed class ApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task BootstrapUsaVersaoDoExecutavelPublicado()
+    {
+        var bootstrap = await client.GetFromJsonAsync<JsonElement>("/api/bootstrap");
+        Assert.Equal(typeof(Program).Assembly.GetName().Version!.ToString(3), bootstrap.GetProperty("version").GetString());
+    }
+
+    [Fact]
     public async Task ApiRecusaTokenAusente() => Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/state")).StatusCode);
 
     [Fact]

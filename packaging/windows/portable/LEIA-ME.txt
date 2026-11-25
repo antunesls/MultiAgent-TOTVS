@@ -1,0 +1,27 @@
+MultAgent TOTVS - Windows 10/11 x64
+
+1. Extraia TODO o ZIP para uma pasta local ou use o instalador EXE.
+2. Abra Iniciar.cmd. O runtime .NET ja esta incluido; nao precisa de SDK/IIS.
+3. O painel fica em http://127.0.0.1:17643. Fechar a pagina nao encerra o servidor.
+4. Prepare seus WebAgents oficiais separadamente. Eles nao acompanham este pacote.
+
+O ZIP e portatil quanto aos binarios, mas os dados ficam sempre em:
+%LOCALAPPDATA%\ProtheusWebAgentManager
+Nao e um modo que grava cadastros ao lado do executavel.
+
+ATUALIZACAO
+Exporte os cadastros e faca backup da pasta de dados com o gerenciador fechado.
+Conclua ou cancele preparacoes de instalador antes de atualizar.
+Execute Parar-Gerenciador.ps1 pelo PowerShell antes de substituir a aplicacao.
+Este script encerra apenas o executavel desta pasta; nao encerra WebAgents.
+Prefira extrair o novo ZIP em outra pasta para evitar sobras da versao anterior.
+O instalador atualiza a pasta do programa. A desinstalacao preserva os dados.
+Nao mantenha copias diferentes do gerenciador abertas ao mesmo tempo.
+
+Se a politica corporativa bloquear PowerShell, solicite liberacao ao administrador.
+Alternativa: execute WebAgentManager.exe e abra o endereco local no navegador.
+O pacote nao tem assinatura digital: o Windows pode apresentar SmartScreen.
+Nao desative controles de seguranca; valide a origem e o SHA256SUMS.txt da release.
+
+Projeto independente, sem vinculo com a TOTVS. Linux ainda nao e suportado.
+Codigo, instrucoes e problemas: https://github.com/antunesls/MultiAgent-TOTVS

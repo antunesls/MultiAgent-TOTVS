@@ -18,6 +18,16 @@ Gerenciador web **local e por usuário Windows** para organizar clientes, ambien
 
 ## Obter o projeto
 
+### Instalar no Windows sem ambiente de desenvolvimento
+
+Os pacotes de distribuição são gerados em dois formatos: **instalador EXE por usuário** e **ZIP portátil**, ambos com .NET incluído. Quando houver uma release publicada, baixe pela página de [Releases](https://github.com/antunesls/MultiAgent-TOTVS/releases), confira o `SHA256SUMS.txt` e execute o instalador ou extraia todo o ZIP e abra `Iniciar.cmd`.
+
+O instalador não exige administrador. Atalhos e início no login são configuráveis. Atualizações e desinstalação preservam os dados em `%LOCALAPPDATA%\ProtheusWebAgentManager`. Os pacotes não incluem WebAgents TOTVS nem dados de clientes e ainda não têm assinatura digital (podem apresentar SmartScreen).
+
+Veja [geração de releases, testes, atualização e roteiro Linux](docs/releases.md). **Linux está planejado, ainda não é suportado.**
+
+### Obter o código-fonte
+
 ```powershell
 git clone https://github.com/antunesls/MultiAgent-TOTVS.git
 cd MultiAgent-TOTVS
