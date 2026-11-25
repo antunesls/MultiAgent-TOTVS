@@ -124,6 +124,8 @@ function editEnvironment(entry = null, agentId = '') {
   }
   const form = $('#environment-form');
   form.reset();
+  // O reset não limpa o valor atribuído a um input hidden na edição anterior.
+  form.elements.id.value = entry?.id || '';
   $('#environment-error').textContent = '';
   $('#environment-title').textContent = entry ? 'Editar ambiente' : 'Novo ambiente';
   $('#environment-agent').innerHTML = state.agents.map(agent => `<option value="${e(agent.id)}">${e(agent.name)} (${e(agent.version)} ${e(agent.architecture)})</option>`).join('');

@@ -88,6 +88,50 @@ test('formulário de ambiente e confirmação de produção (API simulada, sem e
   await expect(page.getByRole('status')).toContainText('Arquivos e vínculos preservados');
 });
 
+for (const origin of ['Novo ambiente', 'Criar ambiente']) {
+  test(`novo cadastro após edição não reutiliza identificador anterior (${origin})`, async ({ page }) => {
+    const original = { id: '11111111111111111111111111111111', client: 'LOCAL', name: 'TOTVS12', kind: 'Desenvolvimento', url: 'http://localhost:4321/', agentId: 'agent-test', browser: '', notes: 'Original', favorite: true };
+    const fixture = { environments: [{ ...original }], agents: [{ id: 'agent-test', name: 'CPQ Produção', version: '1.1.1', architecture: 'x64' }], sessions: [], preparations: [], history: [], settings: {}, browsers: [], diagnostics: {} };
+    const submissions = [];
+    await page.route('**/api/state', route => route.fulfill({ json: fixture }));
+    await page.route('**/api/environments', async route => {
+      const entry = route.request().postDataJSON();
+      submissions.push(entry);
+      const saved = { ...entry, id: entry.id || '22222222222222222222222222222222' };
+      const index = fixture.environments.findIndex(item => item.id === saved.id);
+      if (index === -1) fixture.environments.push(saved);
+      else fixture.environments[index] = saved;
+      await route.fulfill({ json: saved });
+    });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Editar TOTVS12', exact: true }).click();
+    await page.locator('#environment-form [name=notes]').fill('Editado');
+    await page.getByRole('button', { name: 'Salvar ambiente' }).click();
+    await expect(page.locator('#environment-dialog')).not.toBeVisible();
+    expect(submissions[0].id).toBe(original.id);
+    await expect(page.locator('.environment-notes')).toHaveText('Editado');
+
+    if (origin === 'Criar ambiente') await page.getByRole('button', { name: 'WebAgents', exact: true }).click();
+    if (origin === 'Novo ambiente') await page.locator('#new-environment').click();
+    else await page.getByRole('button', { name: origin, exact: true }).click();
+    await expect(page.locator('#environment-title')).toHaveText('Novo ambiente');
+    await expect(page.locator('#environment-form [name=id]')).toHaveValue('');
+    await expect(page.locator('#environment-form [name=notes]')).toHaveValue('');
+    await expect(page.locator('#environment-form [name=favorite]')).not.toBeChecked();
+    await page.locator('#environment-form [name=client]').fill('LOCAL');
+    await page.locator('#environment-form [name=name]').fill('Outro ambiente');
+    await page.locator('#environment-form [name=url]').fill('http://localhost:5432/');
+    await page.getByRole('button', { name: 'Salvar ambiente' }).click();
+    await expect(page.locator('.environment-row')).toHaveCount(2);
+    expect(submissions[1].id).toBe('');
+    expect(fixture.environments[0]).toEqual({ ...original, notes: 'Editado' });
+    await page.reload();
+    await expect(page.locator('.environment-row')).toHaveCount(2);
+    await expect(page.getByRole('heading', { name: 'TOTVS12', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Outro ambiente', exact: true })).toBeVisible();
+  });
+}
+
 test('atualização automática preserva preferência não salva após perder foco', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText('Conectado localmente')).toBeVisible();
